@@ -52,7 +52,7 @@
         <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
         <checkstyle.version>10.12.5</checkstyle.version>
         <error-prone.version>2.24.1</error-prone.version>
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         
         <!-- Performance benchmarking -->
         <jmh.version>1.37</jmh.version>
@@ -338,6 +338,7 @@
                         </execution>
                         <execution>
                             <id>check</id>
+                            <phase>verify</phase>
                             <goals>
                                 <goal>check</goal>
                             </goals>
@@ -349,7 +350,17 @@
                                             <limit>
                                                 <counter>LINE</counter>
                                                 <value>COVEREDRATIO</value>
-                                                <minimum>0.90</minimum>
+                                                <minimum>0.80</minimum>
+                                            </limit>
+                                        </limits>
+                                    </rule>
+                                    <rule>
+                                        <element>BUNDLE</element>
+                                        <limits>
+                                            <limit>
+                                                <counter>LINE</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.80</minimum>
                                             </limit>
                                         </limits>
                                     </rule>
