@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs Exclude Filter Configuration
+  
+  This file defines patterns to exclude from SpotBugs analysis.
+  We keep this minimal to maintain code quality, only excluding
+  false positives or low-value findings.
+-->
+<FindBugsFilter>
+    <!-- Exclude test code from certain checks -->
+    <Match>
+        <Class name="~.*Test$"/>
+        <Bug pattern="DM_NUMBER_CTOR"/>
+    </Match>
+    <Match>
+        <Class name="~.*Tests$"/>
+        <Bug pattern="DM_NUMBER_CTOR"/>
+    </Match>
+    
+    <!-- Exclude generated protobuf classes -->
+    <Match>
+        <Class name="~.*\$Builder$"/>
+    </Match>
+    <Match>
+        <Package name="~.*\.proto\..*"/>
+    </Match>
+    
+    <!-- JMH benchmark classes can have some relaxed rules -->
+    <Match>
+        <Class name="~.*Benchmark$"/>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    
+    <!-- Allow public fields in data transfer objects -->
+    <Match>
+        <Class name="~.*DTO$"/>
+        <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    </Match>
+    
+    <!-- Allow main methods in CLI classes -->
+    <Match>
+        <Method name="main"/>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+</FindBugsFilter> 

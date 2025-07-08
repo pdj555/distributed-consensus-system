@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs Include Filter Configuration
+  
+  This file defines the specific bug patterns that SpotBugs will check for
+  in the distributed consensus system. Following the constitution's mandate
+  for zero tolerance on HIGH findings.
+-->
+<FindBugsFilter>
+    <!-- Critical security vulnerabilities -->
+    <Match>
+        <Bug category="SECURITY"/>
+    </Match>
+    
+    <!-- Correctness issues that could affect Raft safety -->
+    <Match>
+        <Bug category="CORRECTNESS"/>
+    </Match>
+    
+    <!-- Bad practices that could cause issues -->
+    <Match>
+        <Bug category="BAD_PRACTICE"/>
+    </Match>
+    
+    <!-- Performance issues -->
+    <Match>
+        <Bug category="PERFORMANCE"/>
+    </Match>
+    
+    <!-- Multithreading issues - critical for distributed systems -->
+    <Match>
+        <Bug category="MT_CORRECTNESS"/>
+    </Match>
+    
+    <!-- Dodgy code patterns -->
+    <Match>
+        <Bug category="STYLE"/>
+    </Match>
+    
+    <!-- Specific high-priority bug patterns for distributed systems -->
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+    <Match>
+        <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    </Match>
+</FindBugsFilter> 

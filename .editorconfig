@@ -1,0 +1,75 @@
+# EditorConfig configuration for Distributed Consensus System
+# 
+# Ensures consistent coding standards across all development environments
+# as mandated by the constitution for excellence and organization.
+#
+# Top-most EditorConfig file
+root = true
+
+# All files
+[*]
+# Character encoding
+charset = utf-8
+# End of line
+end_of_line = lf
+# Insert final newline
+insert_final_newline = true
+# Trim trailing whitespace
+trim_trailing_whitespace = true
+
+# Java source files
+[*.java]
+# Indentation
+indent_style = space
+indent_size = 4
+# Line length (matches Checkstyle configuration)
+max_line_length = 120
+
+# XML files (POM, configuration)
+[*.xml]
+indent_style = space
+indent_size = 4
+
+# Properties files
+[*.properties]
+indent_style = space
+indent_size = 4
+
+# YAML files (GitHub Actions, Kubernetes)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Protocol Buffers
+[*.proto]
+indent_style = space
+indent_size = 2
+
+# Shell scripts
+[*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# Markdown documentation
+[*.md]
+# Don't trim trailing whitespace (breaks line breaks)
+trim_trailing_whitespace = false
+# Indentation for nested lists
+indent_style = space
+indent_size = 2
+
+# Dockerfile
+[Dockerfile*]
+indent_style = space
+indent_size = 2
+
+# Configuration files in project root
+[{.*rc,.*ignore}]
+indent_style = space
+indent_size = 2 
