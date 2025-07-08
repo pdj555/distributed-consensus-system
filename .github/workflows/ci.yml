@@ -1,0 +1,218 @@
+name: 'Continuous Integration'
+
+# Trigger on pushes to main and pull requests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Environment variables
+env:
+  JAVA_VERSION: '21'
+  MAVEN_OPTS: '-Xmx3g -XX:+UseZGC'
+
+jobs:
+  # Quality gates and testing
+  verify:
+    name: 'Build & Verify'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 'Checkout repository'
+      uses: actions/checkout@v4
+      with:
+        # Fetch full history for accurate blame information
+        fetch-depth: 0
+    
+    - name: 'Set up JDK 21'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 'Verify Maven version'
+      run: |
+        mvn --version
+        java --version
+    
+    - name: 'Run Maven enforcer'
+      run: mvn enforcer:enforce
+    
+    - name: 'Compile sources'
+      run: mvn clean compile -B
+    
+    - name: 'Run unit tests'
+      run: mvn test -B
+    
+    - name: 'Run integration tests'
+      run: mvn verify -B
+      
+    - name: 'Check code style (Checkstyle)'
+      run: mvn checkstyle:check -B
+      
+    - name: 'Run static analysis (SpotBugs)'
+      run: mvn spotbugs:check -B
+      
+    - name: 'Generate code coverage report'
+      run: mvn jacoco:report
+      
+    - name: 'Upload coverage to Codecov'
+      uses: codecov/codecov-action@v3
+      with:
+        file: target/site/jacoco/jacoco.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: 'Package artifacts'
+      run: mvn package -DskipTests -B
+    
+    - name: 'Upload build artifacts'
+      uses: actions/upload-artifact@v4
+      with:
+        name: jars
+        path: |
+          **/target/*.jar
+          !**/target/*-sources.jar
+          !**/target/*-javadoc.jar
+        retention-days: 5
+
+  # Matrix testing across different OS and JVM versions for compatibility
+  compatibility-test:
+    name: 'Compatibility Test'
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        java-version: ['21', '22']
+      fail-fast: false
+    
+    steps:
+    - name: 'Checkout repository'
+      uses: actions/checkout@v4
+    
+    - name: 'Set up JDK ${{ matrix.java-version }}'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 'Run basic build verification'
+      run: mvn clean compile test -B -DskipITs=true
+
+  # Security scanning
+  security-scan:
+    name: 'Security Scan'
+    needs: verify
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 'Checkout repository'
+      uses: actions/checkout@v4
+    
+    - name: 'Set up JDK 21'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 'Run OWASP dependency check'
+      run: |
+        mvn org.owasp:dependency-check-maven:check \
+          -DfailBuildOnCVSS=8 \
+          -DskipProvidedScope=true \
+          -DskipTestScope=true
+    
+    - name: 'Upload security report'
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-report
+        path: target/dependency-check-report.html
+        retention-days: 5
+
+  # Performance benchmarking (only on main branch)
+  benchmark:
+    name: 'Performance Benchmark'
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 'Checkout repository'
+      uses: actions/checkout@v4
+    
+    - name: 'Set up JDK 21'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 'Run JMH benchmarks'
+      run: |
+        mvn clean compile -Pbenchmark
+        mvn exec:java -Pbenchmark -Dexec.args="-rf json -rff benchmark-results.json"
+      
+    - name: 'Upload benchmark results'
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmark-results.json
+        retention-days: 30
+
+  # Documentation and release preparation
+  documentation:
+    name: 'Documentation Check'
+    needs: verify
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 'Checkout repository'
+      uses: actions/checkout@v4
+    
+    - name: 'Set up JDK 21'
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 'Generate Javadoc'
+      run: mvn javadoc:aggregate -B
+    
+    - name: 'Check for documentation issues'
+      run: |
+        # Check for missing Javadoc on public APIs
+        mvn javadoc:javadoc -B -Dshow=public -Dquiet=true
+    
+    - name: 'Lint markdown files'
+      uses: DavidAnson/markdownlint-cli2-action@v13
+      with:
+        globs: '**/*.md'
+
+  # Final status check
+  ci-success:
+    name: 'CI Success'
+    needs: [verify, compatibility-test, security-scan, documentation]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 'Check all jobs status'
+      run: |
+        if [[ "${{ needs.verify.result }}" == "success" && \
+              "${{ needs.compatibility-test.result }}" == "success" && \
+              "${{ needs.security-scan.result }}" == "success" && \
+              "${{ needs.documentation.result }}" == "success" ]]; then
+          echo "✅ All CI jobs passed successfully!"
+        else
+          echo "❌ One or more CI jobs failed"
+          exit 1
+        fi 
