@@ -55,8 +55,12 @@ jobs:
     - name: 'Run static analysis (SpotBugs)'
       run: mvn spotbugs:check -B
       
-    - name: 'Generate code coverage report'
-      run: mvn jacoco:report
+    - name: 'Generate code coverage report and verify threshold'
+      run: |
+        echo "Generating coverage report..."
+        mvn jacoco:report
+        echo "Verifying coverage meets 80% threshold..."
+        mvn jacoco:check -Djacoco.haltOnFailure=true
       
     - name: 'Upload coverage to Codecov'
       uses: codecov/codecov-action@v3
